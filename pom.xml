@@ -60,7 +60,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>edu.georgetown.library.oauth.GUExtractSierraBibs</mainClass>
+							<mainClass>edu.georgetown.library.extractSierraBibs.GUExtractSierraBibs</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
