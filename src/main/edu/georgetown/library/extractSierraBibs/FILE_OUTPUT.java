@@ -349,7 +349,7 @@ public enum FILE_OUTPUT {
 	Vector<MarcFilter> filters = new Vector<>();
 	
 	public File getFile(Date date, String seq) {
-		String ROOT = "";
+		String ROOT = "data/";
 		String dirname = ROOT + fileTarget.name() + "/" + GUExtractSierraBibs.YYYYMMDD.format(date);
 		File dir = new File(dirname);
 		dir.mkdirs();
