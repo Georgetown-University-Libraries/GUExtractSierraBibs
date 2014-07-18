@@ -1,6 +1,8 @@
 *.class
 
 data/
+queue/
+config/api.cfg
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
