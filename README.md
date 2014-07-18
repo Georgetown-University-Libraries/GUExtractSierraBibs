@@ -110,11 +110,12 @@ NoMatch                                           : 9
 
 ### Runtime Parameters
 ```
-QueryType -start [-end <endDate>] [-days <numberOfDays>] [-maxTime <minutes>]
-QueryType -resume [-maxTime <minutes>]
+QueryType -start [-end <endDate>] [-days <numberOfDays>] [-maxTime <minutes>] -config configFile
+QueryType -resume [-maxTime <minutes>] -config configFile
 
              QueryType: ALL|ADDED|UPDATED|DELETED|ADDED_OR_UPDATED|DAILY
                         DAILY: cycles through ADDED, UPDATED, DELETED, and ADDED_OR_UPDATED
+    -config configFile: Path to the configuration file
                 -start: Start a new query task
                -resume: Resume processing a query task if a resume file exists
         -end <endDate>: End date for current query in YYYYMMDD format (not applicable for ALL)
