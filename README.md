@@ -111,8 +111,10 @@ NoMatch                                           : 9
 
 ### Runtime Parameters
 ```
--q QueryType -start [-end <endDate>] [-days <numberOfDays>] [-maxTime <minutes>] -config configFile
--q QueryType -resume [-maxTime <minutes>] -config configFile
+-q QueryType -start [-end <endDate>] [-days <numberOfDays>] 
+             [-maxBibs <numberOfBibs>] [-maxTime <minutes>] -config configFile
+-q QueryType -resume 
+             [-maxBibs <numberOfBibs>] [-maxTime <minutes>] -config configFile
 
           -q QueryType: ALL|ADDED|UPDATED|DELETED|ADDED_OR_UPDATED|DAILY
                         DAILY: cycles through ADDED, UPDATED, DELETED, and ADDED_OR_UPDATED
