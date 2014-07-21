@@ -65,7 +65,7 @@ ROOTDIR
     /output
       /<target> - target consumer of generated files 
         /<date>
-          <file>.mrc - generated file of relevant bib records
+          <file>.dat - generated file of relevant bib records
     /queue
       /compelete - record of completed tasks
         <QueryType>.<date>.txt 
