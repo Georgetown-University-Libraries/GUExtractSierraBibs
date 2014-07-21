@@ -127,6 +127,8 @@ NoMatch                                           : 9
                         Default to 1
     -maxTime <minutes>: Number of minutes to run the process.  
                         If the process does not complete in time, a resume file will be generated
+    -maxBibs <numBibs>: Maximum number of bibs to process (for testing).  
+                        If more bibs are left to process, a resume file will be generated.
 ```
 
 ### Sample Cron Schedule
