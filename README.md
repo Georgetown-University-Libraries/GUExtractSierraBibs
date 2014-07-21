@@ -24,6 +24,7 @@ The full catalog extract process will need to execute over a period of several b
 - `mvn install:install-file -Dfile=marc4j-2.6.0.jar -DgroupId=marc4j -DartifactId=marc4j -Dversion=2.6.0 -Dpackaging=jar`
 - Clone this repository
 - Run mvn install
+- Copy code to the runtime location
 - Edit config/api.cfg
 - Set up the cron
 
