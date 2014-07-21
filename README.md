@@ -132,11 +132,11 @@ NoMatch                                           : 9
 ### Sample Cron Schedule
 ```
 # Daily processes
-0 18 * * * java -jar GUExtractSierraBibs-1.0.jar DAILY -start
+0 6 * * * java -jar GUExtractSierraBibs-1.0.jar DAILY -start -config .../api.cfg
 # Monthly processes, start the full dump on the first of the month
-0 19 1 * * java -jar GUExtractSierraBibs-1.0.jar ALL -start -maxTime 300
+0 21 1 * * java -jar GUExtractSierraBibs-1.0.jar ALL -start -maxTime 240 -config .../api.cfg
 # Resume the monthly dump nightly for 5 hours per night until completed
-5 19 * * * java -jar GUExtractSierraBibs-1.0.jar ALL -resume -maxTime 300
+5 21 * * * java -jar GUExtractSierraBibs-1.0.jar ALL -resume -maxTime 240 -config .../api.cfg
 ```
 
 
