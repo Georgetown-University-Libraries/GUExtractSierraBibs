@@ -2,7 +2,9 @@ package edu.georgetown.library.extractSierraBibs;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
@@ -10,8 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
-
-import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -29,6 +29,7 @@ public class QueryQueueFile {
 	ApiConfigFile apiConfig;
 	Status status = Status.Running;
 	File myPath;
+	QueryOutputFiles queryOutputFiles;
 	
 	enum Status {
 		Running("running"), 
@@ -127,38 +128,41 @@ public class QueryQueueFile {
 		queryType = QUERY_TYPE.valueOf(qt);
 		maxBib = Integer.parseInt(cl.getOptionValue(O_MAXBIB.getOpt(), "0"));
 		maxTime = Integer.parseInt(cl.getOptionValue(O_MAXTIME.getOpt(), "0"));
-		numDays = Integer.parseInt(cl.getOptionValue(O_DAYS.getOpt(), "1"));
-		
-		Date now = Calendar.getInstance().getTime();
-		String endDate = cl.getOptionValue(O_END.getOpt(), YYYYMMDD.format(now));
-		end = YYYYMMDD.parse(endDate);
 
-		extractStats = new ExtractStats(maxBib, maxTime);
 		if (Status.Running.fileExists(apiConfig)) {
 			throw new IIIExtractException("A process is already running");
 		}
 		if (resume) {
 			myPath = Status.Resume.getFile(apiConfig, queryType);
 		}
+		Properties prop = new Properties();
 		if (myPath != null) {
-			loadExistingFile(myPath);
+			prop.load(new FileReader(myPath));
+			queryType = QUERY_TYPE.valueOf(prop.getProperty("QueryType"));
+		} else {
+			numDays = Integer.parseInt(cl.getOptionValue(O_DAYS.getOpt(), "1"));
+			
+			Date now = Calendar.getInstance().getTime();
+			String endDate = cl.getOptionValue(O_END.getOpt(), YYYYMMDD.format(now));
+			end = YYYYMMDD.parse(endDate);			
 		}
+
+		extractStats = new ExtractStats(maxBib, maxTime, prop);
+		queryOutputFiles = new QueryOutputFiles(queryType, end, prop);
+		
 		myPath = createFile(Status.Running, myPath);
 		save();
 	}
 	
-	public void loadExistingFile(File f) throws IllegalArgumentException, FileNotFoundException, IOException {
+	public void save() throws FileNotFoundException, IOException {
 		Properties prop = new Properties();
-		prop.load(new FileReader(f));
-		String qt = prop.getProperty("QueryType");
-		queryType = QUERY_TYPE.valueOf(qt);
+		StringBuffer buf = new StringBuffer();
+		
+		prop.store(new FileWriter(myPath), buf.toString());
 	}
 	
-	public void save() {
-	}
-	
-	public void complete(Status status) {
-		myPath = createFile(status, myPath);
+	public void complete(boolean resume) throws FileNotFoundException, IOException {
+		myPath = createFile(resume ? Status.Resume : Status.Complete, myPath);
 		save();
 	}
 

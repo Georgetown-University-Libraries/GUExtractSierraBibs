@@ -22,4 +22,13 @@ public class OutputStats {
 		}
 		System.out.println("==============================");
 	}
+
+	public void increment(File file) {
+		Integer count = outCounts.get(file);
+		if (count == null) {
+			count = 0;
+			outCounts.put(file, count);
+		}
+		count++;
+	}
 }

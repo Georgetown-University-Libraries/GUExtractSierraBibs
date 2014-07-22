@@ -14,26 +14,29 @@ public class QueryOutputFile {
 	File file;
 	MarcWriter mwrite;
 	String seq = "";
-	int count = 0;
 	
 	public QueryOutputFile(OutputStats stats, FILE_OUTPUT fileOutput, Date date, String seq) throws FileNotFoundException {
 	    this.fileOutput = fileOutput;
 	    setSeq(stats, date, seq);
 	}
 	
+	public QueryOutputFile(OutputStats stats, File f) throws FileNotFoundException {
+		file = f;
+		mwrite = new MarcStreamWriter(new FileOutputStream(file, true));
+	}
+
 	public void setSeq(OutputStats stats, Date date, String seq) throws FileNotFoundException {
 		File newFile = fileOutput.getFile(date, seq);
 		if (file != null) {
 			if (file.getPath().equals(newFile.getPath())) return;
 		}
 		this.seq = seq;
-		close(stats);
+		close();
 		file = newFile;
 		mwrite = new MarcStreamWriter(new FileOutputStream(file));
 	}
 	
-	public void close(OutputStats stats) {
-		if (file != null) stats.outCounts.put(file, count);
+	public void close() {
 		if (mwrite == null) return;
 		mwrite.close();
 		mwrite = null;
@@ -47,10 +50,10 @@ public class QueryOutputFile {
 	}
 	
 	
-	public boolean write(IIIMarc iiiMarc) throws FileNotFoundException {
+	public boolean write(IIIMarc iiiMarc, OutputStats stats) throws FileNotFoundException {
 		if (!fileOutput.test(iiiMarc)) return false;
 		getWriter().write(iiiMarc.marcRec);
-		count++;
+		stats.increment(file);
 		return true;
 	}
 	

@@ -3,6 +3,7 @@ package edu.georgetown.library.extractSierraBibs;
 import java.text.NumberFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 import java.util.TreeMap;
 
 class ExtractStats {
@@ -19,7 +20,13 @@ class ExtractStats {
 	
 	Date endTime = null;
 	
-	ExtractStats(int max, int maxTime) {
+	public static final String P_totalBibs = "totalBibs";
+	public static final String P_totalItems = "totalItems";
+	public static final String P_totalTime = "totalTime";
+	public static final String P_timePerBib = "timePerBib";
+	public static final String P_timePerBibItem = "timePerBibItem";
+	
+	ExtractStats(int max, int maxTime, Properties prop) throws NumberFormatException {
 		this.maxSize = max;
 		this.maxTime = maxTime;
 		
@@ -27,6 +34,12 @@ class ExtractStats {
 			Calendar cal = Calendar.getInstance();
 			cal.add(Calendar.MINUTE, maxTime * 60_000);
 			endTime = cal.getTime();
+		}
+		
+		if (prop != null) {
+			totalBibs = Integer.parseInt(prop.getProperty(P_totalBibs));
+			totalItems = Integer.parseInt(prop.getProperty(P_totalItems));
+			totalDur = Long.parseLong(prop.getProperty(P_totalTime));
 		}
 	}
 	
@@ -48,11 +61,16 @@ class ExtractStats {
 	
 	boolean allBibsRetrieved() {
 		if (lastBatch == -1) return false;
+		if (isResumeNeeded()) return true;
 		if (lastBatch < reqSize) return true;
+		if (lastBatch == 0) return true;
+		return false;
+	}
+	
+	boolean isResumeNeeded() {
 		if (maxSize > 0) {
 			if (totalBibs >= maxSize) return true;
 		}
-		if (lastBatch == 0) return true;
 		if (endTime != null){
 			if (Calendar.getInstance().getTime().compareTo(endTime) >= 0) return true; 			
 		}

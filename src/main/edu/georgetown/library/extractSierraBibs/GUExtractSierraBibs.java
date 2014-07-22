@@ -106,8 +106,7 @@ public class GUExtractSierraBibs {
 	public void runTest() throws OAuthSystemException, OAuthProblemException, FileNotFoundException, IIIExtractException {
 		OAuthConn oconn = new OAuthConn(apiConfig);
 
-		QUERY_TYPE QT = QUERY_TYPE.UPDATED;
-		QueryOutputFiles qofs = new QueryOutputFiles(QT, getEndDate(), 0);
+		QueryOutputFiles qofs = queryQueueFile.queryOutputFiles;
 		
 		ExtractStats extractStats = queryQueueFile.extractStats;
 				
@@ -138,6 +137,8 @@ public class GUExtractSierraBibs {
 			
 		}
         qofs.closeAll();
+        
+        queryQueueFile.complete(extractStats.isResumeNeeded());
         extractStats.report();
         qofs.stats.report();
 	}
