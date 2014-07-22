@@ -60,8 +60,8 @@ LOCATION_CODE_FILE: data/locations.txt
 ROOTDIR
   /config - system configuration files
     api.cfg
+    location.txt (manually created from data in Sierra Admin Corner)
   /data
-    location.txt
     /output
       /<target> - target consumer of generated files 
         /<date>
