@@ -25,11 +25,11 @@ class OAuthConn {
 	String secret;
 	String key;
 	
-	OAuthConn(String apiRoot, String authPath, String key, String secret) throws OAuthSystemException, OAuthProblemException {
-		this.key = key;
-		this.secret = secret;
-		this.apiRoot = apiRoot;
-		this.authPath = authPath;
+	OAuthConn(ApiConfigFile apiConfig) throws OAuthSystemException, OAuthProblemException {
+		this.key = apiConfig.key;
+		this.secret = apiConfig.secret;
+		this.apiRoot = apiConfig.apiRoot;
+		this.authPath = "token";
 		oAuthClient = new OAuthClient(new URLConnectionClient());
 		
 		initConn();

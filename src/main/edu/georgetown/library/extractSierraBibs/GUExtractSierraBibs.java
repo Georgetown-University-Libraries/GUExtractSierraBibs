@@ -3,13 +3,18 @@ package edu.georgetown.library.extractSierraBibs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.json.JSONArray;
@@ -23,25 +28,21 @@ public class GUExtractSierraBibs {
 	 * System.out.println(Base64.encode(s.getBytes()));
 	 */
 
-	String apiRoot = "https://sandbox.iii.com/iii/sierra-api/v1/";
-	String key = "";
-	String secret = "";
+	ApiConfigFile apiConfig;
+	QueryQueueFile queryQueueFile;
 	ExtractStats extractStats;
 	
 	static boolean isDebug() {return false;}
 	static boolean isInfo() {return true;}
-	static SimpleDateFormat MMDDYY = new SimpleDateFormat("MMddyy");
-	static SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
 	
 	HashMap<String,String> locationMap = new HashMap<>();
 	static final String locationMapFile = "location_mapping.csv";
 
-	GUExtractSierraBibs(String apiRoot, String key, String secret, String max) throws IOException {
-		this.apiRoot = apiRoot;
-		this.key = key;
-		this.secret = secret;
+	GUExtractSierraBibs(ApiConfigFile apiConfig, QueryQueueFile queryQueueFile) throws IOException {
+		this.apiConfig = apiConfig;
+		this.queryQueueFile = queryQueueFile;
 		
-		extractStats = new ExtractStats(Integer.parseInt(max));
+		extractStats = new ExtractStats(queryQueueFile.maxBib);
 		//extractStats = new ExtractStats(1);
 		
 		Vector<Vector<String>> locationData = DelimitedFileReader.parseFile(new File(locationMapFile), ",");
@@ -146,7 +147,7 @@ public class GUExtractSierraBibs {
 	}
 	
 	public void runTest() throws OAuthSystemException, OAuthProblemException, FileNotFoundException, IIIExtractException {
-		OAuthConn oconn = new OAuthConn(apiRoot, "token", key, secret);
+		OAuthConn oconn = new OAuthConn(apiConfig);
 
 		QUERY_TYPE QT = QUERY_TYPE.UPDATED;
 		QueryOutputFiles qofs = new QueryOutputFiles(QT, getEndDate(), 0);
@@ -182,11 +183,30 @@ public class GUExtractSierraBibs {
         qofs.stats.report();
 	}
 	
+	
 	public static void main(String[] args) {		
 		try {
-			GUExtractSierraBibs oTest = new GUExtractSierraBibs(args[0], args[1], args[2], args[3]);
-			oTest.runTest();
-		} catch (OAuthSystemException | OAuthProblemException | IIIExtractException | IOException e) {
+			CommandLineParser parser = new BasicParser();
+			Options options = QueryQueueFile.getOptions();
+			try {
+				CommandLine cl = parser.parse(options, args, false);
+				String cfname = cl.getOptionValue(QueryQueueFile.O_CONFIG.getOpt(), "");
+				if (cfname.isEmpty()) throw new ParseException("Config file must be specified");
+				ApiConfigFile apiConfig = new ApiConfigFile(cfname);
+				QueryQueueFile queryQueueFile = new QueryQueueFile(cl);
+				
+				System.exit(1);
+				
+				GUExtractSierraBibs oTest = new GUExtractSierraBibs(apiConfig, queryQueueFile);
+				oTest.runTest();
+			} catch (ParseException|IllegalArgumentException|java.text.ParseException|IOException e) {
+				System.err.println(e);
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);
+				System.out.println("\n  -- OR -- \n");
+				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);
+			}
+		} catch (OAuthSystemException | OAuthProblemException | IIIExtractException e) {
 			e.printStackTrace();
 		}
 	}
