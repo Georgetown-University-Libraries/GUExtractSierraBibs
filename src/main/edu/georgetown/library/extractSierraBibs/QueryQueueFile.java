@@ -1,9 +1,17 @@
 package edu.georgetown.library.extractSierraBibs;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
+
+import javax.swing.filechooser.FileFilter;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -17,7 +25,61 @@ public class QueryQueueFile {
 	int maxTime;
 	Date end;
 	int numDays;
+	ExtractStats extractStats;
+	ApiConfigFile apiConfig;
+	Status status = Status.Running;
+	File myPath;
+	
+	enum Status {
+		Running("running"), 
+		Resume("resume"), 
+		Complete("complete");
+		
+		String path;
+		Status(String path) {
+			this.path = path;
+		}
+		
+		public File getDir(ApiConfigFile apiConfig) {
+			return new File(apiConfig.dirRoot, path);
+		}
+		
+		public boolean fileExists(ApiConfigFile apiConfig) {
+			File f = getDir(apiConfig);
+			return f.listFiles().length > 0;
+		}
+		
+		class QtFilenameFilter implements FilenameFilter {
+			QUERY_TYPE qt;
+			QtFilenameFilter(QUERY_TYPE qt) {
+				this.qt = qt;
+			}
+			public boolean accept(File dir, String name) {
+				return name.startsWith(qt.name());
+			}
+		}
+		
+		public File getFile(ApiConfigFile apiConfig, QUERY_TYPE qt) {
+			File f = getDir(apiConfig);
+			File[] files = f.listFiles(new QtFilenameFilter(qt));
+			return files.length > 0 ? files[0] : null;
+		}
+	}
 
+	public File createFile(Status status, File existing) {
+		File dir = status.getDir(apiConfig);
+		StringBuffer fname = new StringBuffer();
+		fname.append(queryType.name());
+		fname.append(".");
+		fname.append(YYYYMMDD.format(end));
+		fname.append(".txt");
+		File f = new File(dir, fname.toString());
+		if (existing != null) {
+			existing.renameTo(f);
+		}
+		return f;
+	}
+	
 	static SimpleDateFormat MMDDYY = new SimpleDateFormat("MMddyy");
 	static SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
 	public static final Option O_Q = new Option("q", true, "Query type: ALL|ADDED|UPDATED|DELETED|ADDED_OR_UPDATED|DAILY");
@@ -56,9 +118,12 @@ public class QueryQueueFile {
 		return opts;
 	}
 
-	public QueryQueueFile(CommandLine cl) throws IllegalArgumentException, NumberFormatException, ParseException {
+		
+	public QueryQueueFile(ApiConfigFile apiConfig, CommandLine cl) throws IllegalArgumentException, NumberFormatException, ParseException, IIIExtractException, FileNotFoundException, IOException {
+		this.apiConfig = apiConfig;
 		String qt = cl.getOptionValue(O_Q.getOpt(), ""); 
 		resume = cl.hasOption(O_RESUME.getOpt());
+		
 		queryType = QUERY_TYPE.valueOf(qt);
 		maxBib = Integer.parseInt(cl.getOptionValue(O_MAXBIB.getOpt(), "0"));
 		maxTime = Integer.parseInt(cl.getOptionValue(O_MAXTIME.getOpt(), "0"));
@@ -67,5 +132,66 @@ public class QueryQueueFile {
 		Date now = Calendar.getInstance().getTime();
 		String endDate = cl.getOptionValue(O_END.getOpt(), YYYYMMDD.format(now));
 		end = YYYYMMDD.parse(endDate);
+
+		extractStats = new ExtractStats(maxBib, maxTime);
+		if (Status.Running.fileExists(apiConfig)) {
+			throw new IIIExtractException("A process is already running");
+		}
+		if (resume) {
+			myPath = Status.Resume.getFile(apiConfig, queryType);
+		}
+		if (myPath != null) {
+			loadExistingFile(myPath);
+		}
+		myPath = createFile(Status.Running, myPath);
+		save();
 	}
+	
+	public void loadExistingFile(File f) throws IllegalArgumentException, FileNotFoundException, IOException {
+		Properties prop = new Properties();
+		prop.load(new FileReader(f));
+		String qt = prop.getProperty("QueryType");
+		queryType = QUERY_TYPE.valueOf(qt);
+	}
+	
+	public void save() {
+	}
+	
+	public void complete(Status status) {
+		myPath = createFile(status, myPath);
+		save();
+	}
+
+	public String getBibQuery(int limit, int lastId, String filter) {
+		StringBuffer buf = new StringBuffer();
+		buf.append("bibs?limit=");
+		buf.append(limit);
+		buf.append("&id=[" + (lastId+1) + ",]");
+		buf.append("&fields=id,varFields,fixedFields");
+		buf.append(filter);
+		if (GUExtractSierraBibs.isInfo()) System.out.println(buf.toString());
+		return buf.toString();
+	}
+
+	public String getBibQuery() {
+		return getBibQuery(extractStats.getBibLimit(), extractStats.lastId, queryType.getQuery(end, numDays));
+	}
+
+    public String getItemQuery(int limit, int offset, String bibIds) {
+		StringBuffer ibuf = new StringBuffer();
+		ibuf.append("items?limit=");
+		ibuf.append(limit);
+		ibuf.append("&offset=");
+		ibuf.append(offset);
+		ibuf.append("&bibIds=");
+		ibuf.append(bibIds.toString());
+		ibuf.append("&fields=default,varFields,fixedFields");
+		if (GUExtractSierraBibs.isInfo()) System.out.println(ibuf.toString());
+		return ibuf.toString();
+	}
+    
+    public String getItemQuery(ExtractItemStats extractItemStats) {
+    	return getItemQuery(extractStats.reqSize, extractItemStats.offset, extractItemStats.bibIds);
+    }
+
 }

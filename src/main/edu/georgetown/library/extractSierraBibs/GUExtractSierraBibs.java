@@ -1,13 +1,10 @@
 package edu.georgetown.library.extractSierraBibs;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -30,45 +27,17 @@ public class GUExtractSierraBibs {
 
 	ApiConfigFile apiConfig;
 	QueryQueueFile queryQueueFile;
-	ExtractStats extractStats;
 	
 	static boolean isDebug() {return false;}
 	static boolean isInfo() {return true;}
 	
-	HashMap<String,String> locationMap = new HashMap<>();
 	static final String locationMapFile = "location_mapping.csv";
 
 	GUExtractSierraBibs(ApiConfigFile apiConfig, QueryQueueFile queryQueueFile) throws IOException {
 		this.apiConfig = apiConfig;
-		this.queryQueueFile = queryQueueFile;
-		
-		extractStats = new ExtractStats(queryQueueFile.maxBib);
-		//extractStats = new ExtractStats(1);
-		
-		Vector<Vector<String>> locationData = DelimitedFileReader.parseFile(new File(locationMapFile), ",");
-		boolean header = true;
-		for(Vector<String> row: locationData) {
-			if (header) {
-				header = false;
-				continue;
-			}
-			if (row.size() < 3) continue;
-			String item = row.get(0);
-			String bib = row.get(2);
-			locationMap.put(item, bib);
-		}
+		this.queryQueueFile = queryQueueFile;		
 	}
 	
-	public static String getBibQuery(int limit, int lastId, String filter) {
-		StringBuffer buf = new StringBuffer();
-		buf.append("bibs?limit=");
-		buf.append(limit);
-		buf.append("&id=[" + (lastId+1) + ",]");
-		buf.append("&fields=id,varFields,fixedFields");
-		buf.append(filter);
-		if (isInfo()) System.out.println(buf.toString());
-		return buf.toString();
-	}
 	
 	public Date getEndDate() {
 		return Calendar.getInstance().getTime();
@@ -78,18 +47,6 @@ public class GUExtractSierraBibs {
 		return 1;
 	}
 	
-    public static String getItemQuery(int limit, int offset, String bibIds) {
-		StringBuffer ibuf = new StringBuffer();
-		ibuf.append("items?limit=");
-		ibuf.append(limit);
-		ibuf.append("&offset=");
-		ibuf.append(offset);
-		ibuf.append("&bibIds=");
-		ibuf.append(bibIds.toString());
-		ibuf.append("&fields=default,varFields,fixedFields");
-		if (isInfo()) System.out.println(ibuf.toString());
-		return ibuf.toString();
-	}
 
 	public TreeMap<Integer,IIIMarc> mapBibs(JSONArray jarr) {
 		TreeMap<Integer,IIIMarc> bibMarcMap = new TreeMap<>();
@@ -126,12 +83,12 @@ public class GUExtractSierraBibs {
 			System.err.println("Bib obj not found " + bibId);
 			return;
 		}
-		bib.addItem(iobj, locationMap);
+		bib.addItem(iobj, apiConfig.locationMap);
 	}
 	
 	public void extractAssociatedItems(OAuthConn oconn, TreeMap<Integer,IIIMarc> bibMarcMap, ExtractItemStats extractItemStats) throws OAuthSystemException, OAuthProblemException, IIIExtractException {
 		while(!extractItemStats.isAllItemsRetrieved()) {
-			String itemQ = getItemQuery(extractStats.reqSize, extractItemStats.offset, extractItemStats.bibIds);
+			String itemQ = queryQueueFile.getItemQuery(extractItemStats);
 			String iresp = oconn.getApiResult(itemQ);
 			
 			JSONObject iobjlist = new JSONObject(iresp);
@@ -151,11 +108,13 @@ public class GUExtractSierraBibs {
 
 		QUERY_TYPE QT = QUERY_TYPE.UPDATED;
 		QueryOutputFiles qofs = new QueryOutputFiles(QT, getEndDate(), 0);
+		
+		ExtractStats extractStats = queryQueueFile.extractStats;
 				
 		while (!extractStats.allBibsRetrieved()) {
 			extractStats.start();
 			//String bibQ = getBibQuery(extractStats.getBibLimit(), extractStats.lastId, QUERY_TYPE.ADDED.getQuery(getEndDate(), getDurationDays()));
-			String bibQ = getBibQuery(extractStats.getBibLimit(), extractStats.lastId, QT.getQuery(getEndDate(), getDurationDays()));
+			String bibQ = queryQueueFile.getBibQuery();
 			String resp = oconn.getApiResult(bibQ);
 			
 			JSONObject jobj = new JSONObject(resp);
@@ -193,7 +152,7 @@ public class GUExtractSierraBibs {
 				String cfname = cl.getOptionValue(QueryQueueFile.O_CONFIG.getOpt(), "");
 				if (cfname.isEmpty()) throw new ParseException("Config file must be specified");
 				ApiConfigFile apiConfig = new ApiConfigFile(cfname);
-				QueryQueueFile queryQueueFile = new QueryQueueFile(cl);
+				QueryQueueFile queryQueueFile = new QueryQueueFile(apiConfig, cl);
 				
 				System.exit(1);
 				

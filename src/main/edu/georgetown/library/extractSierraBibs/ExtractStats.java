@@ -2,6 +2,7 @@ package edu.georgetown.library.extractSierraBibs;
 
 import java.text.NumberFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TreeMap;
 
 class ExtractStats {
@@ -11,12 +12,22 @@ class ExtractStats {
 	int reqSize = 50;
 	int lastBatch = -1;
 	int maxSize = 1;
+	int maxTime = 0;
 	
 	long totalDur = 0;
 	long start = 0;
 	
-	ExtractStats(int max) {
+	Date endTime = null;
+	
+	ExtractStats(int max, int maxTime) {
 		this.maxSize = max;
+		this.maxTime = maxTime;
+		
+		if (maxTime > 0) {
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.MINUTE, maxTime * 60_000);
+			endTime = cal.getTime();
+		}
 	}
 	
 	public void start() {
@@ -38,10 +49,14 @@ class ExtractStats {
 	boolean allBibsRetrieved() {
 		if (lastBatch == -1) return false;
 		if (lastBatch < reqSize) return true;
-		if (totalBibs >= maxSize) {
-			if (maxSize > 0) return true;
-		} 
-		return (lastBatch == 0);
+		if (maxSize > 0) {
+			if (totalBibs >= maxSize) return true;
+		}
+		if (lastBatch == 0) return true;
+		if (endTime != null){
+			if (Calendar.getInstance().getTime().compareTo(endTime) >= 0) return true; 			
+		}
+		return false;
 	}
 	
 	ExtractItemStats tallyAndListBibs(TreeMap<Integer,IIIMarc> bibMarcMap) {
