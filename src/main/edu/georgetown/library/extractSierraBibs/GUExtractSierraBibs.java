@@ -1,6 +1,5 @@
 package edu.georgetown.library.extractSierraBibs;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -103,7 +102,7 @@ public class GUExtractSierraBibs {
 		}		
 	}
 	
-	public void runTest() throws OAuthSystemException, OAuthProblemException, FileNotFoundException, IIIExtractException {
+	public void runTest() throws OAuthSystemException, OAuthProblemException, IIIExtractException, IOException {
 		OAuthConn oconn = new OAuthConn(apiConfig);
 
 		QueryOutputFiles qofs = queryQueueFile.queryOutputFiles;
