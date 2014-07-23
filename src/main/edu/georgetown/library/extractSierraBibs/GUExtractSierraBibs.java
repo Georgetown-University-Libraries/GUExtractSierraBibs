@@ -103,12 +103,12 @@ public class GUExtractSierraBibs {
 	}
 	
 	public void runTest() throws OAuthSystemException, OAuthProblemException, IIIExtractException, IOException {
-		OAuthConn oconn = new OAuthConn(apiConfig);
 
+		OAuthConn oconn = new OAuthConn(apiConfig);
 		QueryOutputFiles qofs = queryQueueFile.queryOutputFiles;
 		
 		ExtractStats extractStats = queryQueueFile.extractStats;
-				
+
 		while (!extractStats.allBibsRetrieved()) {
 			extractStats.start();
 			//String bibQ = getBibQuery(extractStats.getBibLimit(), extractStats.lastId, QUERY_TYPE.ADDED.getQuery(getEndDate(), getDurationDays()));
@@ -134,7 +134,7 @@ public class GUExtractSierraBibs {
 			
 			extractStats.end();
 			
-		}
+		}			
         qofs.closeAll();
         
         queryQueueFile.complete(extractStats.isResumeNeeded());
@@ -155,10 +155,16 @@ public class GUExtractSierraBibs {
 				String cfname = cl.getOptionValue(CommandLineOptions.O_CONFIG.getOpt(), "");
 				if (cfname.isEmpty()) throw new ParseException("Config file must be specified");
 				ApiConfigFile apiConfig = new ApiConfigFile(cfname);
-				QueryQueueFile queryQueueFile = new QueryQueueFile(apiConfig, cl);
 				
-				GUExtractSierraBibs oTest = new GUExtractSierraBibs(apiConfig, queryQueueFile);
-				oTest.runTest();
+				String qpstr = cl.getOptionValue(CommandLineOptions.O_Q.getOpt(), ""); 
+				
+				//In case the DAILY param is selected, loop through all queries
+				QUERY_PARAMS qp = QUERY_PARAMS.valueOf(qpstr);
+				for(QUERY_TYPE qt: qp.queries) {
+					QueryQueueFile queryQueueFile = new QueryQueueFile(apiConfig, cl, qt);
+					GUExtractSierraBibs oTest = new GUExtractSierraBibs(apiConfig, queryQueueFile);
+					oTest.runTest();					
+				}
 			} catch (ParseException|IllegalArgumentException|java.text.ParseException|IOException e) {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);

@@ -31,7 +31,7 @@ public class QueryQueueFile {
 	public static final String P_QT = "queryType";
 	public static final String P_END = "endDate";
 	public static final String P_DAYS = "numDays";
-	
+		
 	public File createFile(QueueFolder status, File existing) {
 		File dir = status.getDir(apiConfig);
 		StringBuffer fname = new StringBuffer();
@@ -59,12 +59,10 @@ public class QueryQueueFile {
 	static SimpleDateFormat MMDDYY = new SimpleDateFormat("MMddyy");
 	static SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
 		
-	public QueryQueueFile(ApiConfigFile apiConfig, CommandLine cl) throws IllegalArgumentException, NumberFormatException, ParseException, IIIExtractException, FileNotFoundException, IOException {
+	public QueryQueueFile(ApiConfigFile apiConfig, CommandLine cl, QUERY_TYPE qt) throws IllegalArgumentException, NumberFormatException, ParseException, IIIExtractException, FileNotFoundException, IOException {
 		this.apiConfig = apiConfig;
-		String qt = cl.getOptionValue(CommandLineOptions.O_Q.getOpt(), ""); 
 		resume = cl.hasOption(CommandLineOptions.O_RESUME.getOpt());
-		
-		queryType = QUERY_TYPE.valueOf(qt);
+		queryType = qt;
 		maxBib = Integer.parseInt(cl.getOptionValue(CommandLineOptions.O_MAXBIB.getOpt(), "0"));
 		maxTime = Integer.parseInt(cl.getOptionValue(CommandLineOptions.O_MAXTIME.getOpt(), "0"));
 

@@ -62,4 +62,5 @@ public enum QUERY_TYPE {
 		   .append("]");
 		return buf.toString();
 	}
+
 }
