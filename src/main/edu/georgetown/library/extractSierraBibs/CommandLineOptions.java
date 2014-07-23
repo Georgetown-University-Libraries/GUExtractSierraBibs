@@ -13,7 +13,7 @@ public class CommandLineOptions {
 	public static final Option O_END = new Option("end", true, "End date for current query in YYYYMMDD format (not applicable for ALL). Default: current date at 12:00AM");
 	public static final Option O_DAYS = new Option("days", true, "Integer, used to calculate start date for current query (not applicable for ALL). Default: 1");
 	public static final Option O_MAXBIB= new Option("maxBibs", true, "Maximum number of bibs to process (for testing). If more bibs are left to process, a resume file will be generated.");
-	public static final Option O_MAXTIME= new Option("maxTime", true, "Number of minutes to run the process.  If the process does not complete in time, a resume file will be generated");
+	public static final Option O_MAXTIME= new Option("maxMin", true, "Number of minutes to run the process.  If the process does not complete in time, a resume file will be generated");
 	public static final Option O_CONFIG = new Option("config", true, "Configuration file.");
 	static {
 		O_Q.setRequired(true);

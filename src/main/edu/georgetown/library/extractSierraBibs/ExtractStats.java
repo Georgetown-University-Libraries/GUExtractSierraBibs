@@ -37,7 +37,7 @@ class ExtractStats {
 		
 		if (maxTime > 0) {
 			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.MINUTE, maxTime * 60_000);
+			cal.add(Calendar.MINUTE, maxTime);
 			endTime = cal.getTime();
 		}
 		
