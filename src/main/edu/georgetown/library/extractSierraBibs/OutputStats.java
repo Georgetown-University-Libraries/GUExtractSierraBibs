@@ -18,7 +18,7 @@ public class OutputStats {
 		System.out.println("==============================");
 		for(File f: outCounts.keySet()) {
 			Integer val = outCounts.get(f);
-			System.out.println(String.format("%-50.50s: ", f.getPath()) + val);
+			System.out.println(String.format("%-60.60s: ", f.getPath()) + val);
 		}
 		System.out.println("==============================");
 	}
@@ -27,8 +27,8 @@ public class OutputStats {
 		Integer count = outCounts.get(file);
 		if (count == null) {
 			count = 0;
-			outCounts.put(file, count);
 		}
 		count++;
+		outCounts.put(file, count);
 	}
 }

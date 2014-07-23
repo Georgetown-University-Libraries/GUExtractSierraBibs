@@ -166,7 +166,9 @@ public class GUExtractSierraBibs {
 				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);
 				e.printStackTrace();
 			}
-		} catch (OAuthSystemException | OAuthProblemException | IIIExtractException e) {
+		} catch (IIIExtractException e) {
+			System.err.println(e.getMessage());
+		} catch (OAuthSystemException | OAuthProblemException e) {
 			e.printStackTrace();
 		}
 	}

@@ -71,8 +71,11 @@ public class QueryQueueFile {
 		if (QueueFolder.Running.fileExists(apiConfig)) {
 			throw new IIIExtractException("A process is already running: " + QueueFolder.Running.getFile(apiConfig, null).getAbsolutePath());
 		}
+		myPath = QueueFolder.Resume.getFile(apiConfig, queryType);
 		if (resume) {
-			myPath = QueueFolder.Resume.getFile(apiConfig, queryType);
+			if (myPath == null) throw new IIIExtractException("No resume file exists for " + queryType.name() + ".  Stopping.");
+		} else {
+			if (myPath != null) throw new IIIExtractException("Resume file exists for " + queryType.name() + ".  Cannot start a new process.");			
 		}
 		Properties prop = new Properties();
 		Date now = Calendar.getInstance().getTime();
