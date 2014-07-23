@@ -58,4 +58,10 @@ public class QueryOutputFiles {
 		if (skip) skipCount++;
 	}
 
+	public void updateProperties(Properties prop) {
+		for(File f: stats.outCounts.keySet()) {
+			prop.setProperty(f.getPath(), stats.outCounts.get(f).toString());
+		}
+	}
+
 }

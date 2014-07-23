@@ -25,6 +25,7 @@ class ExtractStats {
 	public static final String P_totalTime = "totalTime";
 	public static final String P_timePerBib = "timePerBib";
 	public static final String P_timePerBibItem = "timePerBibItem";
+	public static final String P_lastBibId = "lastBibId";
 	
 	ExtractStats(int max, int maxTime, Properties prop) throws NumberFormatException {
 		this.maxSize = max;
@@ -37,9 +38,9 @@ class ExtractStats {
 		}
 		
 		if (prop != null) {
-			totalBibs = Integer.parseInt(prop.getProperty(P_totalBibs));
-			totalItems = Integer.parseInt(prop.getProperty(P_totalItems));
-			totalDur = Long.parseLong(prop.getProperty(P_totalTime));
+			totalBibs = Integer.parseInt(prop.getProperty(P_totalBibs, "0"));
+			totalItems = Integer.parseInt(prop.getProperty(P_totalItems, "0"));
+			totalDur = Long.parseLong(prop.getProperty(P_totalTime, "0"));
 		}
 	}
 	
@@ -96,8 +97,26 @@ class ExtractStats {
 		System.out.println("Total Bibs:    " + totalBibs);
 		System.out.println("Total Items:   " + totalItems);
 		System.out.println("Total Time:    " + totalDur + "ms");
-		if (totalBibs > 0) System.out.println("Total Time/Bib " + totalDur/totalBibs + "ms");
+		if (totalBibs > 0) System.out.println("Total Time/Bib " + timePerBib() + "ms");
 		if (totalBibs + totalItems > 0) System.out.println("Total Time/Bib&Item " + totalDur/(totalBibs+totalItems) + "ms");
 		System.out.println("==============================");
+	}
+	
+	public long timePerBib() {
+		if (totalBibs == 0) return 0;
+		return totalDur/totalBibs;
+	}
+	public long timePerBibItem() {
+		if (totalBibs+totalItems == 0) return 0;
+		return totalDur/(totalBibs+totalItems);
+	}
+
+	public void updateProperties(Properties prop) {
+		prop.setProperty(P_lastBibId, ""+lastId);
+		prop.setProperty(P_totalBibs, ""+totalBibs);
+		prop.setProperty(P_totalItems, ""+totalItems);
+		prop.setProperty(P_totalTime, ""+totalDur);
+		prop.setProperty(P_timePerBib, ""+timePerBib());
+		prop.setProperty(P_timePerBibItem, ""+timePerBibItem());
 	}
 }

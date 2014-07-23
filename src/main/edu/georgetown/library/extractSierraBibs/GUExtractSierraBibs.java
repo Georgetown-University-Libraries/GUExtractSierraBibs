@@ -154,16 +154,14 @@ public class GUExtractSierraBibs {
 				ApiConfigFile apiConfig = new ApiConfigFile(cfname);
 				QueryQueueFile queryQueueFile = new QueryQueueFile(apiConfig, cl);
 				
-				System.exit(1);
-				
 				GUExtractSierraBibs oTest = new GUExtractSierraBibs(apiConfig, queryQueueFile);
 				oTest.runTest();
 			} catch (ParseException|IllegalArgumentException|java.text.ParseException|IOException e) {
-				System.err.println(e);
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);
 				System.out.println("\n  -- OR -- \n");
 				formatter.printHelp( "java -jar GUExtractSierraBibs-1.0.jar", options);
+				e.printStackTrace();
 			}
 		} catch (OAuthSystemException | OAuthProblemException | IIIExtractException e) {
 			e.printStackTrace();

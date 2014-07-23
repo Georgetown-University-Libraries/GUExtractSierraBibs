@@ -2,7 +2,6 @@ package edu.georgetown.library.extractSierraBibs;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -31,6 +30,10 @@ public class QueryQueueFile {
 	File myPath;
 	QueryOutputFiles queryOutputFiles;
 	
+	public static final String P_QT = "queryType";
+	public static final String P_END = "endDate";
+	public static final String P_DAYS = "numDays";
+	
 	enum Status {
 		Running("running"), 
 		Resume("resume"), 
@@ -42,7 +45,8 @@ public class QueryQueueFile {
 		}
 		
 		public File getDir(ApiConfigFile apiConfig) {
-			return new File(apiConfig.dirRoot, path);
+			File q = new File(apiConfig.dirRoot, "queue");
+			return new File(q, path);
 		}
 		
 		public boolean fileExists(ApiConfigFile apiConfig) {
@@ -62,7 +66,7 @@ public class QueryQueueFile {
 		
 		public File getFile(ApiConfigFile apiConfig, QUERY_TYPE qt) {
 			File f = getDir(apiConfig);
-			File[] files = f.listFiles(new QtFilenameFilter(qt));
+			File[] files = qt == null ? f.listFiles() : f.listFiles(new QtFilenameFilter(qt));
 			return files.length > 0 ? files[0] : null;
 		}
 	}
@@ -73,10 +77,14 @@ public class QueryQueueFile {
 		fname.append(queryType.name());
 		fname.append(".");
 		fname.append(YYYYMMDD.format(end));
-		fname.append(".txt");
-		File f = new File(dir, fname.toString());
+		File f = new File(dir, fname.toString() + ".txt");
+		for(int i=1; f.exists(); i++) {
+			f = new File(dir,fname.toString()+"_"+i+".txt");
+		}
 		if (existing != null) {
-			existing.renameTo(f);
+			if (!existing.renameTo(f)) {
+				System.err.println("Rename failed for "+existing.getAbsolutePath());
+			}
 		}
 		return f;
 	}
@@ -130,7 +138,7 @@ public class QueryQueueFile {
 		maxTime = Integer.parseInt(cl.getOptionValue(O_MAXTIME.getOpt(), "0"));
 
 		if (Status.Running.fileExists(apiConfig)) {
-			throw new IIIExtractException("A process is already running");
+			throw new IIIExtractException("A process is already running: " + Status.Running.getFile(apiConfig, null).getAbsolutePath());
 		}
 		if (resume) {
 			myPath = Status.Resume.getFile(apiConfig, queryType);
@@ -157,8 +165,17 @@ public class QueryQueueFile {
 	public void save() throws FileNotFoundException, IOException {
 		Properties prop = new Properties();
 		StringBuffer buf = new StringBuffer();
+		buf.append("Queue file for Extract Sierra Bibs: https://github.com/Georgetown-University-Libraries/GUExtractSierraBibs");
+
+		prop.setProperty(P_QT, queryType.name());
+		prop.setProperty(P_END, YYYYMMDD.format(end));
+		prop.setProperty(P_DAYS, ""+numDays);
+		extractStats.updateProperties(prop);
+		queryOutputFiles.updateProperties(prop);
 		
-		prop.store(new FileWriter(myPath), buf.toString());
+		FileWriter fw = new FileWriter(myPath); 
+		prop.store(fw, buf.toString());
+		fw.close();
 	}
 	
 	public void complete(boolean resume) throws FileNotFoundException, IOException {
