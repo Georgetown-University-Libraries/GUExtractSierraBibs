@@ -129,7 +129,7 @@ public class GUExtractSierraBibs {
 				//The following function is placed here in case the item recs need to inform the bib custom fields
 				iiiMarc.appendCustomAndItemMarc();
 				qofs.writeAll(iiiMarc);
-				if (isInfo()) System.out.println(iiiMarc.marcRec.toString());
+				if (isDebug()) System.out.println(iiiMarc.marcRec.toString());
 			}
 			
 			extractStats.end();
@@ -145,11 +145,14 @@ public class GUExtractSierraBibs {
 	
 	public static void main(String[] args) {		
 		try {
+			System.out.print("COMMAND LINE: ");
+			for(String arg: args) {System.out.print(arg + " ");}
+			System.out.println();
 			CommandLineParser parser = new BasicParser();
-			Options options = QueryQueueFile.getOptions();
+			Options options = CommandLineOptions.getOptions();
 			try {
 				CommandLine cl = parser.parse(options, args, false);
-				String cfname = cl.getOptionValue(QueryQueueFile.O_CONFIG.getOpt(), "");
+				String cfname = cl.getOptionValue(CommandLineOptions.O_CONFIG.getOpt(), "");
 				if (cfname.isEmpty()) throw new ParseException("Config file must be specified");
 				ApiConfigFile apiConfig = new ApiConfigFile(cfname);
 				QueryQueueFile queryQueueFile = new QueryQueueFile(apiConfig, cl);

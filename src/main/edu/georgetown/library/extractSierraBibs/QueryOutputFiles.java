@@ -16,7 +16,7 @@ public class QueryOutputFiles {
 	static NumberFormat nf = NumberFormat.getIntegerInstance();
 	static {nf.setMinimumIntegerDigits(2);}
 	
-	int seq;
+	int seq = 0;
 	int skipCount = 0;
 	
 	public QueryOutputFiles(QUERY_TYPE queryType, Date date, Properties prop) throws NumberFormatException, FileNotFoundException {

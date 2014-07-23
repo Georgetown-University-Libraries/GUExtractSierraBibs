@@ -27,7 +27,6 @@ public class ApiConfigFile {
 		if (!dirRoot.exists()) {
 			throw new FileNotFoundException("ROOTDIR does not exist: "+dirRoot.getAbsolutePath());
 		}
-		System.out.println(dirRoot.getAbsolutePath());
 		apiRoot = prop.getProperty("APIROOT");
 		key = prop.getProperty("CLIENT_KEY");
 		secret = prop.getProperty("CLIENT_SECRET");
@@ -35,7 +34,6 @@ public class ApiConfigFile {
 		if (!locations.exists()) {
 			throw new FileNotFoundException("locations file does not exist: "+locations.getAbsolutePath());
 		}
-		System.out.println(locations.getAbsolutePath());
 		Vector<Vector<String>> locationData = DelimitedFileReader.parseFile(locations, ",");
 		boolean header = true;
 		for(Vector<String> row: locationData) {

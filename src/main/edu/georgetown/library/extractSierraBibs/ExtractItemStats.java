@@ -21,5 +21,6 @@ class ExtractItemStats {
 		itotal = total;
 		offset += batchSize;
 		parentStats.totalItems += batchSize;
+		parentStats.currentItems += batchSize;
 	}
 }

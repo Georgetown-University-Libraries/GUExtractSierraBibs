@@ -130,17 +130,17 @@ public enum FILE_OUTPUT {
 	),
 
 	SUMMON_DML_ALL_ER(
-			QUERY_TYPE.ALL, 
-			FILE_TARGET.SummonFull, 
-			"DML_ER_",
-			QueryQueueFile.MMDDYY, 
-			CatDate.NotBlank,
-			LocDml.DML,
-			LocPio.NA,
-			LocInet.NA,
-			WrlcEbsco.NA,
-			Material.EorM
-		),
+		QUERY_TYPE.ALL, 
+		FILE_TARGET.SummonFull, 
+		"DML_ER_",
+		QueryQueueFile.MMDDYY, 
+		CatDate.NotBlank,
+		LocDml.DML,
+		LocPio.NA,
+		LocInet.NA,
+		WrlcEbsco.NA,
+		Material.EorM
+	),
 	SUMMON_DML_ALL_NOER(
 		QUERY_TYPE.ALL, 
 		FILE_TARGET.SummonFull, 
@@ -154,17 +154,17 @@ public enum FILE_OUTPUT {
 		Material.NoEorM
 	),
 	SUMMON_GT_ALL_ER(
-			QUERY_TYPE.ALL, 
-			FILE_TARGET.SummonFull, 
-			"GT_ER_[SEQ]",
-			QueryQueueFile.MMDDYY, 
-			CatDate.NotBlank,
-			LocDml.NoDML,
-			LocPio.NoPio,
-			LocInet.Inet,
-			WrlcEbsco.NA,
-			Material.EorM
-		),
+		QUERY_TYPE.ALL, 
+		FILE_TARGET.SummonFull, 
+		"GT_ER_[SEQ]",
+		QueryQueueFile.MMDDYY, 
+		CatDate.NotBlank,
+		LocDml.NoDML,
+		LocPio.NoPio,
+		LocInet.Inet,
+		WrlcEbsco.NA,
+		Material.EorM
+	),
 	SUMMON_GT_ALL_NOER(
 		QUERY_TYPE.ALL, 
 		FILE_TARGET.SummonFull, 

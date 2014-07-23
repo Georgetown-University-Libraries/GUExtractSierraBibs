@@ -4,8 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -13,9 +14,6 @@ import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
-import org.apache.commons.cli.Options;
 
 public class QueryQueueFile {
 	QUERY_TYPE queryType;
@@ -26,7 +24,7 @@ public class QueryQueueFile {
 	int numDays;
 	ExtractStats extractStats;
 	ApiConfigFile apiConfig;
-	Status status = Status.Running;
+	QueueFolder status = QueueFolder.Running;
 	File myPath;
 	QueryOutputFiles queryOutputFiles;
 	
@@ -34,56 +32,25 @@ public class QueryQueueFile {
 	public static final String P_END = "endDate";
 	public static final String P_DAYS = "numDays";
 	
-	enum Status {
-		Running("running"), 
-		Resume("resume"), 
-		Complete("complete");
-		
-		String path;
-		Status(String path) {
-			this.path = path;
-		}
-		
-		public File getDir(ApiConfigFile apiConfig) {
-			File q = new File(apiConfig.dirRoot, "queue");
-			return new File(q, path);
-		}
-		
-		public boolean fileExists(ApiConfigFile apiConfig) {
-			File f = getDir(apiConfig);
-			return f.listFiles().length > 0;
-		}
-		
-		class QtFilenameFilter implements FilenameFilter {
-			QUERY_TYPE qt;
-			QtFilenameFilter(QUERY_TYPE qt) {
-				this.qt = qt;
-			}
-			public boolean accept(File dir, String name) {
-				return name.startsWith(qt.name());
-			}
-		}
-		
-		public File getFile(ApiConfigFile apiConfig, QUERY_TYPE qt) {
-			File f = getDir(apiConfig);
-			File[] files = qt == null ? f.listFiles() : f.listFiles(new QtFilenameFilter(qt));
-			return files.length > 0 ? files[0] : null;
-		}
-	}
-
-	public File createFile(Status status, File existing) {
+	public File createFile(QueueFolder status, File existing) {
 		File dir = status.getDir(apiConfig);
 		StringBuffer fname = new StringBuffer();
 		fname.append(queryType.name());
 		fname.append(".");
 		fname.append(YYYYMMDD.format(end));
 		File f = new File(dir, fname.toString() + ".txt");
-		for(int i=1; f.exists(); i++) {
-			f = new File(dir,fname.toString()+"_"+i+".txt");
+		if (status == QueueFolder.Complete) {
+			for(int i=1; f.exists(); i++) {
+				f = new File(dir,fname.toString()+"_"+i+".txt");
+			}
 		}
 		if (existing != null) {
-			if (!existing.renameTo(f)) {
-				System.err.println("Rename failed for "+existing.getAbsolutePath());
+			try {
+				Files.move(existing.toPath(), f.toPath(), StandardCopyOption.ATOMIC_MOVE);
+			} catch (IOException e) {
+				System.err.println("Rename failed from "+existing.getAbsolutePath() + " TO " + f.getAbsolutePath());
+				e.printStackTrace();
+				System.exit(1);
 			}
 		}
 		return f;
@@ -91,74 +58,44 @@ public class QueryQueueFile {
 	
 	static SimpleDateFormat MMDDYY = new SimpleDateFormat("MMddyy");
 	static SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
-	public static final Option O_Q = new Option("q", true, "Query type: ALL|ADDED|UPDATED|DELETED|ADDED_OR_UPDATED|DAILY");
-	public static final Option O_START = new Option("start", false, "Initiate a new query");
-	public static final Option O_RESUME = new Option("resume", false, "Resume an already running query");
-	public static final Option O_END = new Option("end", true, "End date for current query in YYYYMMDD format (not applicable for ALL). Default: current date at 12:00AM");
-	public static final Option O_DAYS = new Option("days", true, "Integer, used to calculate start date for current query (not applicable for ALL). Default: 1");
-	public static final Option O_MAXBIB= new Option("maxBibs", true, "Maximum number of bibs to process (for testing). If more bibs are left to process, a resume file will be generated.");
-	public static final Option O_MAXTIME= new Option("maxTime", true, "Number of minutes to run the process.  If the process does not complete in time, a resume file will be generated");
-	public static final Option O_CONFIG = new Option("config", true, "Configuration file.");
-	static {
-		O_Q.setRequired(true);
-		O_CONFIG.setRequired(true);
-		
-		O_END.setType(Date.class);
-		O_DAYS.setType(Integer.class);
-		O_MAXBIB.setType(Integer.class);
-		O_MAXTIME.setType(Integer.class);
-	}
-	
-	public static Options getOptions() {
-		Options opts = new Options();
-		opts.addOption(O_Q);
-
-		OptionGroup og = new OptionGroup();
-		og.addOption(O_START);
-		og.addOption(O_RESUME);
-		opts.addOptionGroup(og);
-		
-		opts.addOption(O_END);
-		opts.addOption(O_DAYS);
-		
-		opts.addOption(O_MAXBIB);
-		opts.addOption(O_MAXTIME);
-		opts.addOption(O_CONFIG);
-		return opts;
-	}
-
 		
 	public QueryQueueFile(ApiConfigFile apiConfig, CommandLine cl) throws IllegalArgumentException, NumberFormatException, ParseException, IIIExtractException, FileNotFoundException, IOException {
 		this.apiConfig = apiConfig;
-		String qt = cl.getOptionValue(O_Q.getOpt(), ""); 
-		resume = cl.hasOption(O_RESUME.getOpt());
+		String qt = cl.getOptionValue(CommandLineOptions.O_Q.getOpt(), ""); 
+		resume = cl.hasOption(CommandLineOptions.O_RESUME.getOpt());
 		
 		queryType = QUERY_TYPE.valueOf(qt);
-		maxBib = Integer.parseInt(cl.getOptionValue(O_MAXBIB.getOpt(), "0"));
-		maxTime = Integer.parseInt(cl.getOptionValue(O_MAXTIME.getOpt(), "0"));
+		maxBib = Integer.parseInt(cl.getOptionValue(CommandLineOptions.O_MAXBIB.getOpt(), "0"));
+		maxTime = Integer.parseInt(cl.getOptionValue(CommandLineOptions.O_MAXTIME.getOpt(), "0"));
 
-		if (Status.Running.fileExists(apiConfig)) {
-			throw new IIIExtractException("A process is already running: " + Status.Running.getFile(apiConfig, null).getAbsolutePath());
+		if (QueueFolder.Running.fileExists(apiConfig)) {
+			throw new IIIExtractException("A process is already running: " + QueueFolder.Running.getFile(apiConfig, null).getAbsolutePath());
 		}
 		if (resume) {
-			myPath = Status.Resume.getFile(apiConfig, queryType);
+			myPath = QueueFolder.Resume.getFile(apiConfig, queryType);
 		}
 		Properties prop = new Properties();
+		Date now = Calendar.getInstance().getTime();
 		if (myPath != null) {
-			prop.load(new FileReader(myPath));
-			queryType = QUERY_TYPE.valueOf(prop.getProperty("QueryType"));
+			FileReader fr = new FileReader(myPath);
+			prop.load(fr);
+			fr.close();
+			queryType = QUERY_TYPE.valueOf(prop.getProperty(P_QT));
+
+			numDays = Integer.parseInt(prop.getProperty(P_DAYS, "1"));
+			String endDate = prop.getProperty(P_END, YYYYMMDD.format(now));
+			end = YYYYMMDD.parse(endDate);			
 		} else {
-			numDays = Integer.parseInt(cl.getOptionValue(O_DAYS.getOpt(), "1"));
+			numDays = Integer.parseInt(cl.getOptionValue(CommandLineOptions.O_DAYS.getOpt(), "1"));
 			
-			Date now = Calendar.getInstance().getTime();
-			String endDate = cl.getOptionValue(O_END.getOpt(), YYYYMMDD.format(now));
+			String endDate = cl.getOptionValue(CommandLineOptions.O_END.getOpt(), YYYYMMDD.format(now));
 			end = YYYYMMDD.parse(endDate);			
 		}
 
 		extractStats = new ExtractStats(maxBib, maxTime, prop);
 		queryOutputFiles = new QueryOutputFiles(queryType, end, prop);
 		
-		myPath = createFile(Status.Running, myPath);
+		myPath = createFile(QueueFolder.Running, myPath);
 		save();
 	}
 	
@@ -176,10 +113,11 @@ public class QueryQueueFile {
 		FileWriter fw = new FileWriter(myPath); 
 		prop.store(fw, buf.toString());
 		fw.close();
+		System.out.println("RESULTS SAVED TO: " + myPath.getAbsolutePath());
 	}
 	
 	public void complete(boolean resume) throws FileNotFoundException, IOException {
-		myPath = createFile(resume ? Status.Resume : Status.Complete, myPath);
+		myPath = createFile(resume ? QueueFolder.Resume : QueueFolder.Complete, myPath);
 		save();
 	}
 
