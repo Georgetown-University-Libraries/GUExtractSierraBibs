@@ -4,6 +4,7 @@ data/
 queue/
 config/api.cfg
 config/location_mapping.csv
+target/
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
